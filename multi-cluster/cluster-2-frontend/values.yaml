@@ -1,0 +1,112 @@
+# Frontend Cluster Configuration
+global:
+  image:
+    repository: ghcr.io/agntcy/coffee-agntcy
+    tag: latest
+    pullPolicy: Always
+  
+  # Cross-cluster connectivity
+  backendCluster:
+    # Update these with actual backend cluster endpoints
+    natsEndpoint: "nats://nats.backend-cluster.local:4222"
+    slimEndpoint: "http://slim.backend-cluster.local:46357"
+    otlpEndpoint: "http://otel-collector.backend-cluster.local:4318"
+
+# Service configuration
+serviceType: LoadBalancer
+
+# LLM Configuration (litellm format)
+llm:
+  # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")
+  model: "azure/gpt-4o"
+  apiKey: ""
+  temperature: 0.7
+  
+  # Provider-specific settings (only when needed)
+  azure:
+    apiBase: "https://your-azure-openai.openai.azure.com/"
+    apiVersion: "2024-02-15-preview"
+
+# External Secrets Configuration (optional - for production)
+# Uncomment to use existing external secret management
+# externalSecrets:
+#   secretStoreName: "your-secret-store"       # Name of your existing SecretStore
+#   secretStoreKind: "SecretStore"             # SecretStore or ClusterSecretStore
+#   data:
+#     - secretKey: "llm-api-key"               # Key in Kubernetes secret
+#       remoteRef:
+#         key: "lungo/frontend-llm-key"        # Key in external store
+#         property: "api-key"                  # Property within the key (if needed)
+
+# External dependencies
+external-secrets:
+  installCRDs: true
+
+# Grafana configuration
+grafana:
+  adminPassword: "admin"
+  service:
+    type: LoadBalancer  # Expose Grafana via LoadBalancer
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: ClickHouse
+        type: grafana-clickhouse-datasource
+        url: http://clickhouse.backend-cluster.local:8123
+        access: proxy
+        basicAuth: true
+        basicAuthUser: admin
+        basicAuthPassword: admin
+
+# Frontend services
+services:
+  exchange:
+    name: lungo-exchange
+    port: 8000
+    image: lungo-exchange
+
+  ui:
+    name: lungo-ui
+    port: 3000
+    image: lungo-ui
+    config:
+      exchangeAppApiUrl: "http://lungo-exchange:8000"
+      logisticsAppApiUrl: "http://logistics-supervisor:9090"
+
+  logisticsSupervisor:
+    name: logistics-supervisor
+    port: 9090
+    image: logistic-supervisor
+
+  # Additional logistics services (SLIM transport)
+  logistics:
+    farm:
+      name: logistic-farm
+      port: 9093
+      image: logistic-farm
+    helpdesk:
+      name: logistic-helpdesk
+      port: 9094
+      image: logistic-helpdesk
+    shipper:
+      name: logistic-shipper
+      port: 9091
+      image: logistic-shipper
+    accountant:
+      name: logistic-accountant
+      port: 9092
+      image: logistic-accountant
+
+# Transport configuration (connects to backend cluster)
+transport:
+  nats:
+    endpoint: "{{ .Values.global.backendCluster.natsEndpoint }}"
+    type: "NATS"
+  slim:
+    endpoint: "{{ .Values.global.backendCluster.slimEndpoint }}"
+    type: "SLIM"
+
+# Observability (connects to backend cluster)
+observability:
+  otlpEndpoint: "{{ .Values.global.backendCluster.otlpEndpoint }}"

@@ -1,0 +1,94 @@
+{{- range .Values.services.farms }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .name }}
+    spec:
+      containers:
+      - name: {{ .name }}
+        image: {{ $.Values.global.image.repository }}/{{ .image }}:{{ $.Values.global.image.tag }}
+        imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .port }}
+        env:
+        - name: TRANSPORT_SERVER_ENDPOINT
+          value: {{ $.Values.transport.nats.endpoint }}
+        - name: DEFAULT_MESSAGE_TRANSPORT
+          value: {{ $.Values.transport.nats.type }}
+        - name: OTLP_HTTP_ENDPOINT
+          value: {{ $.Values.observability.otlpEndpoint }}
+        - name: LLM_MODEL
+          value: {{ $.Values.llm.model }}
+        {{ if $.Values.externalSecrets }}
+        # Azure OpenAI
+        - name: AZURE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: llm-api-key
+        - name: AZURE_API_BASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: azure-api-base
+        - name: AZURE_API_VERSION
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: azure-api-version
+        # OpenAI
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: llm-api-key
+        # GROQ
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: llm-api-key
+        {{ else }}
+        # Azure OpenAI
+        - name: AZURE_API_KEY
+          value: {{ $.Values.llm.apiKey }}
+        - name: AZURE_API_BASE
+          value: {{ $.Values.llm.azure.apiBase }}
+        - name: AZURE_API_VERSION
+          value: {{ $.Values.llm.azure.apiVersion }}
+        # OpenAI
+        - name: OPENAI_API_KEY
+          value: {{ $.Values.llm.apiKey }}
+        # GROQ
+        - name: GROQ_API_KEY
+          value: {{ $.Values.llm.apiKey }}
+        {{ end }}
+        - name: LLM_TEMPERATURE
+          value: {{ $.Values.llm.temperature | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .port }}
+    name: http
+  selector:
+    app: {{ .name }}
+{{- end }}

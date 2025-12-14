@@ -1,0 +1,9 @@
+dependencies:
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 0.9.3
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 8.5.2
+digest: sha256:991cccc489e83c10f94d0c8a371e9cbb7ffa3990182147e9e492aefc5d46c75e
+generated: "2025-12-13T05:27:02.524996623Z"
