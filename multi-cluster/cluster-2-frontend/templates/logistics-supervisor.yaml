@@ -23,7 +23,14 @@ spec:
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
+          runAsNonRoot: true
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
         image: {{ .Values.global.image.repository }}/{{ .Values.services.logisticsSupervisor.image }}:{{ .Values.global.image.tag }}
         imagePullPolicy: {{ .Values.global.image.pullPolicy }}
         ports:
