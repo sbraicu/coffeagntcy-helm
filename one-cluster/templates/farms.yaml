@@ -42,38 +42,52 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ $.Release.Name }}-secrets
-              key: azure-api-base
+              key: llm-api-base
         - name: AZURE_API_VERSION
           valueFrom:
             secretKeyRef:
               name: {{ $.Release.Name }}-secrets
-              key: azure-api-version
+              key: llm-api-version
         # OpenAI
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
               name: {{ $.Release.Name }}-secrets
               key: llm-api-key
+        - name: OPENAI_API_BASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: llm-api-base
         # GROQ
         - name: GROQ_API_KEY
           valueFrom:
             secretKeyRef:
               name: {{ $.Release.Name }}-secrets
               key: llm-api-key
+        - name: GROQ_API_BASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ $.Release.Name }}-secrets
+              key: llm-api-base
         {{ else }}
         # Azure OpenAI
         - name: AZURE_API_KEY
           value: {{ $.Values.llm.apiKey }}
         - name: AZURE_API_BASE
-          value: {{ $.Values.llm.azure.apiBase }}
+          value: {{ $.Values.llm.apiBase }}
         - name: AZURE_API_VERSION
-          value: {{ $.Values.llm.azure.apiVersion }}
+          value: {{ $.Values.llm.apiVersion }}
         # OpenAI
         - name: OPENAI_API_KEY
           value: {{ $.Values.llm.apiKey }}
+        - name: OPENAI_API_BASE
+          value: {{ $.Values.llm.apiBase }}
         # GROQ
         - name: GROQ_API_KEY
           value: {{ $.Values.llm.apiKey }}
+        - name: GROQ_API_BASE
+          value: {{ $.Values.llm.apiBase }}
         {{ end }}
         - name: LLM_TEMPERATURE
           value: {{ $.Values.llm.temperature | quote }}

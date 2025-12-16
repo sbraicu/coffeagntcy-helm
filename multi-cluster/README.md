@@ -16,10 +16,10 @@ Edit `cluster-1-backend/values.yaml`:
 **Option A: Direct Configuration (Development)**
 ```yaml
 llm:
-  provider: "ollama"                           # ← CHANGE: Your LLM provider
-  model: "llama2:7b"                          # ← CHANGE: Your model name
-  endpoint: "http://your-llm-server:11434"     # ← CHANGE: Your LLM endpoint
-  apiKey: "your-backend-api-key"              # ← CHANGE: Your API key (if needed)
+  model: "azure/your-deployment-name"          # ← CHANGE: Provider/model
+  apiKey: "your-backend-api-key"              # ← CHANGE: Your API key
+  apiBase: "https://your-resource.openai.azure.com/"  # ← CHANGE: Your endpoint
+  apiVersion: "2024-02-15-preview"            # ← CHANGE: API version
   temperature: 0.7                            # ← OPTIONAL: Adjust as needed
 ```
 
@@ -33,13 +33,12 @@ externalSecrets:
     - secretKey: "llm-api-key"
       remoteRef:
         key: "lungo/backend-llm-key"
-        property: "api-key"
 
 llm:
-  provider: "ollama"
-  model: "llama2:7b"
-  endpoint: "http://your-llm-server:11434"
+  model: "azure/your-deployment-name"
   apiKey: ""                                  # Will come from external secret
+  apiBase: "https://your-resource.openai.azure.com/"
+  apiVersion: "2024-02-15-preview"
   temperature: 0.7
 ```
 
@@ -49,12 +48,11 @@ Edit `cluster-2-frontend/values.yaml`:
 **Option A: Direct Configuration (Development)**
 ```yaml
 llm:
-  provider: "azure"                                    # ← CHANGE: Your provider
-  model: "your-deployment-name"                        # ← CHANGE: Your model/deployment
-  endpoint: "https://your-resource.openai.azure.com/"  # ← CHANGE: Your endpoint
+  model: "azure/your-deployment-name"                  # ← CHANGE: Provider/model
   apiKey: "your-frontend-api-key"                     # ← CHANGE: Your API key
+  apiBase: "https://your-resource.openai.azure.com/"  # ← CHANGE: Your endpoint
+  apiVersion: "2024-02-15-preview"                    # ← CHANGE: API version
   temperature: 0.7                                    # ← OPTIONAL: Adjust as needed
-  apiVersion: "2024-02-15-preview"                    # ← CHANGE: Provider-specific
 ```
 
 **Option B: External Secrets (Production)**
@@ -67,15 +65,37 @@ externalSecrets:
     - secretKey: "llm-api-key"
       remoteRef:
         key: "lungo-frontend-llm-key"
-        property: "api-key"
 
 llm:
-  provider: "azure"
-  model: "your-deployment-name"
-  endpoint: "https://your-resource.openai.azure.com/"
+  model: "azure/your-deployment-name"
   apiKey: ""                                          # Will come from external secret
-  temperature: 0.7
+  apiBase: "https://your-resource.openai.azure.com/"
   apiVersion: "2024-02-15-preview"
+  temperature: 0.7
+```
+
+**Other LLM Providers:**
+```yaml
+# OpenAI
+llm:
+  model: "openai/gpt-4"
+  apiKey: "your-openai-api-key"
+  apiBase: "https://api.openai.com/v1"  # Optional, this is default
+  temperature: 0.7
+
+# GROQ
+llm:
+  model: "groq/llama-3.1-70b-versatile"
+  apiKey: "your-groq-api-key"
+  apiBase: "https://api.groq.com/openai/v1"  # Optional, this is default
+  temperature: 0.7
+
+# Local LLM (OpenAI-compatible)
+llm:
+  model: "openai/your-local-model"
+  apiKey: "not-needed"
+  apiBase: "http://localhost:8080/v1"
+  temperature: 0.7
 ```
 
 ## External Secrets (Production)

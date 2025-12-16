@@ -133,36 +133,43 @@ serviceType: LoadBalancer  # LoadBalancer, ClusterIP, NodePort
 ```
 
 ### LLM Configuration
-Configure your LLM provider in `values.yaml`. Services receive provider-specific environment variables:
+Configure your LLM provider in `values.yaml`:
 
 **Azure OpenAI:**
 ```yaml
 llm:
   model: "azure/your-deployment-name"
+  apiKey: "your-azure-api-key"
+  apiBase: "https://your-resource.openai.azure.com/"
+  apiVersion: "2024-02-15-preview"
   temperature: 0.7
-  azure:
-    apiKey: "your-azure-api-key"
-    apiBase: "https://your-resource.openai.azure.com/"
-    apiVersion: "2024-02-15-preview"
 ```
 
 **OpenAI:**
 ```yaml
 llm:
   model: "openai/gpt-4"
+  apiKey: "your-openai-api-key"
+  apiBase: "https://api.openai.com/v1"  # Optional, this is default
   temperature: 0.7
-  openai:
-    apiKey: "your-openai-api-key"
-    temperature: 0.7
 ```
 
 **GROQ:**
 ```yaml
 llm:
   model: "groq/llama-3.1-70b-versatile"
+  apiKey: "your-groq-api-key"
+  apiBase: "https://api.groq.com/openai/v1"  # Optional, this is default
   temperature: 0.7
-  groq:
-    apiKey: "your-groq-api-key"
+```
+
+**Local LLM (OpenAI-compatible):**
+```yaml
+llm:
+  model: "openai/your-local-model"
+  apiKey: "not-needed"  # Some servers require any value
+  apiBase: "http://localhost:8080/v1"
+  temperature: 0.7
 ```
 
 ### External Dependencies
