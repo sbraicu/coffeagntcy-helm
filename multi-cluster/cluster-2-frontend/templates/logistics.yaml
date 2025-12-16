@@ -16,8 +16,14 @@ spec:
       labels:
         app: {{ $service.name }}
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: {{ $service.name }}
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
         image: {{ $.Values.global.image.repository }}/{{ $service.image }}:{{ $.Values.global.image.tag }}
         imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
         ports:

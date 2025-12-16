@@ -36,67 +36,67 @@ spec:
         - name: OTLP_HTTP_ENDPOINT
           value: {{ $.Values.observability.otlpEndpoint }}
         - name: LLM_MODEL
-          value: {{ $.Values.llm.model }}
+          value: {{ $.Values.llm.backend.model }}
         {{ if $.Values.externalSecrets }}
         # Azure OpenAI
         - name: AZURE_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-key
         - name: AZURE_API_BASE
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-base
         - name: AZURE_API_VERSION
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-version
         # OpenAI
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-key
         - name: OPENAI_API_BASE
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-base
         # GROQ
         - name: GROQ_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-key
         - name: GROQ_API_BASE
           valueFrom:
             secretKeyRef:
-              name: {{ $.Release.Name }}-secrets
+              name: {{ $.Release.Name }}-backend-secrets
               key: llm-api-base
         {{ else }}
         # Azure OpenAI
         - name: AZURE_API_KEY
-          value: {{ $.Values.llm.apiKey }}
+          value: {{ $.Values.llm.backend.apiKey }}
         - name: AZURE_API_BASE
-          value: {{ $.Values.llm.apiBase }}
+          value: {{ $.Values.llm.backend.apiBase }}
         - name: AZURE_API_VERSION
-          value: {{ $.Values.llm.apiVersion }}
+          value: {{ $.Values.llm.backend.apiVersion }}
         # OpenAI
         - name: OPENAI_API_KEY
-          value: {{ $.Values.llm.apiKey }}
+          value: {{ $.Values.llm.backend.apiKey }}
         - name: OPENAI_API_BASE
-          value: {{ $.Values.llm.apiBase }}
+          value: {{ $.Values.llm.backend.apiBase }}
         # GROQ
         - name: GROQ_API_KEY
-          value: {{ $.Values.llm.apiKey }}
+          value: {{ $.Values.llm.backend.apiKey }}
         - name: GROQ_API_BASE
-          value: {{ $.Values.llm.apiBase }}
+          value: {{ $.Values.llm.backend.apiBase }}
         {{ end }}
         - name: LLM_TEMPERATURE
-          value: {{ $.Values.llm.temperature | quote }}
+          value: {{ $.Values.llm.backend.temperature | quote }}
 ---
 apiVersion: v1
 kind: Service

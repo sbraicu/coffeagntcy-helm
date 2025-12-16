@@ -18,8 +18,14 @@ spec:
         app: {{ .name }}
         cluster: backend
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: {{ .name }}
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
         image: {{ $.Values.global.image.repository }}/{{ .image }}:{{ $.Values.global.image.tag }}
         imagePullPolicy: {{ $.Values.global.image.pullPolicy }}
         ports:

@@ -1,0 +1,157 @@
+# Global settings
+global:
+  environment: local
+  security:
+    allowInsecureImages: true
+  image:
+    repository: ghcr.io/agntcy/coffee-agntcy
+    tag: latest
+    pullPolicy: Always
+
+# Service configuration - LoadBalancer for all environments
+serviceType: LoadBalancer
+
+# Grafana configuration
+grafana:
+  service:
+    type: LoadBalancer
+    port: 80
+  adminUser: admin
+  adminPassword: admin
+
+# External dependencies configuration
+external-secrets:
+  installCRDs: true
+
+opentelemetry-collector:
+  image:
+    repository: otel/opentelemetry-collector-k8s
+  mode: deployment
+
+clickhouse:
+  auth:
+    username: "admin"
+    password: "admin"
+  keeper:
+    enabled: false
+  shards: 1
+  replicaCount: 1
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/clickhouse
+    tag: "25.7.4-debian-12-r2"
+
+nats:
+  readinessProbe:
+    httpGet: { path: /healthz, port: 8222 }
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  livenessProbe:
+    httpGet: { path: /healthz, port: 8222 }
+    initialDelaySeconds: 20
+    periodSeconds: 20
+
+# Application services
+services:
+  exchange:
+    name: lungo-exchange
+    port: 8000
+    image: lungo-exchange
+  
+  ui:
+    name: lungo-ui
+    port: 3000
+    image: lungo-ui
+    config:
+      exchangeAppApiUrl: "http://localhost:8000"
+      logisticsAppApiUrl: "http://localhost:9090"
+
+  # Farm services (NATS transport)
+  farms:
+    - name: brazil-farm
+      port: 9999
+      image: brazil-farm
+    - name: colombia-farm
+      port: 9999
+      image: colombia-farm
+    - name: vietnam-farm
+      port: 9999
+      image: vietnam-farm
+
+  # Logistics services (SLIM transport)
+  logistics:
+    supervisor:
+      name: logistic-supervisor
+      port: 9090
+      image: logistic-supervisor
+    farm:
+      name: logistic-farm
+      port: 9093
+      image: logistic-farm
+    helpdesk:
+      name: logistic-helpdesk
+      port: 9094
+      image: logistic-helpdesk
+    shipper:
+      name: logistic-shipper
+      port: 9091
+      image: logistic-shipper
+    accountant:
+      name: logistic-accountant
+      port: 9092
+      image: logistic-accountant
+
+  # MCP server
+  weatherMcp:
+    name: weather-mcp-server
+    port: 8125
+    image: weather-mcp-server
+
+# Transport configuration
+transport:
+  nats:
+    endpoint: "nats://lungo-nats:4222"
+    type: "NATS"
+  slim:
+    endpoint: "http://lungo-slim:46357"
+    type: "SLIM"
+
+# Observability
+observability:
+  otlpEndpoint: "http://lungo-opentelemetry-collector:4318"
+
+# LLM Configuration (litellm format) - Dual configuration for frontend and backend
+llm:
+  frontend:
+    # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")
+    model: "azure/gpt-4o"
+    apiKey: ""
+    apiBase: "https://your-azure-openai.openai.azure.com/"
+    apiVersion: "2024-02-15-preview"
+    temperature: 0.7
+
+  backend:
+    # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")
+    model: "azure/gpt-4o"
+    apiKey: ""
+    apiBase: "https://your-azure-openai.openai.azure.com/"
+    apiVersion: "2024-02-15-preview"
+    temperature: 0.7
+
+# External Secrets Configuration (optional - for production)
+# Uncomment to use existing external secret management (Vault, AWS, Azure, etc.)
+# externalSecrets:
+#   secretStoreName: "your-secret-store"       # Name of your existing SecretStore
+#   secretStoreKind: "SecretStore"             # SecretStore or ClusterSecretStore
+#   frontend:
+#     data:
+#       - secretKey: "llm-api-key"             # Key in Kubernetes secret
+#         remoteRef:
+#           key: "lungo/frontend-llm-key"      # Key in external store
+#           property: "api-key"                # Property within the key (if needed)
+#   backend:
+#     data:
+#       - secretKey: "llm-api-key"             # Key in Kubernetes secret
+#         remoteRef:
+#           key: "lungo/backend-llm-key"       # Key in external store
+#           property: "api-key"                # Property within the key (if needed)

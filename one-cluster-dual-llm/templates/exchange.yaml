@@ -1,104 +1,101 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.services.logisticsSupervisor.name }}
+  name: {{ .Values.services.exchange.name }}
   labels:
-    app: {{ .Values.services.logisticsSupervisor.name }}
-    cluster: frontend
+    app: {{ .Values.services.exchange.name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.services.logisticsSupervisor.name }}
+      app: {{ .Values.services.exchange.name }}
   template:
     metadata:
       labels:
-        app: {{ .Values.services.logisticsSupervisor.name }}
-        cluster: frontend
+        app: {{ .Values.services.exchange.name }}
     spec:
       securityContext:
         fsGroup: 1000
       containers:
-      - name: {{ .Values.services.logisticsSupervisor.name }}
+      - name: {{ .Values.services.exchange.name }}
         securityContext:
           runAsUser: 1000
           runAsGroup: 1000
           allowPrivilegeEscalation: false
-        image: {{ .Values.global.image.repository }}/{{ .Values.services.logisticsSupervisor.image }}:{{ .Values.global.image.tag }}
+        image: {{ .Values.global.image.repository }}/{{ .Values.services.exchange.image }}:{{ .Values.global.image.tag }}
         imagePullPolicy: {{ .Values.global.image.pullPolicy }}
         ports:
-        - containerPort: {{ .Values.services.logisticsSupervisor.port }}
+        - containerPort: {{ .Values.services.exchange.port }}
         env:
         - name: TRANSPORT_SERVER_ENDPOINT
-          value: {{ .Values.transport.slim.endpoint }}
+          value: {{ .Values.transport.nats.endpoint }}
         - name: DEFAULT_MESSAGE_TRANSPORT
-          value: {{ .Values.transport.slim.type }}
+          value: {{ .Values.transport.nats.type }}
         - name: OTLP_HTTP_ENDPOINT
           value: {{ .Values.observability.otlpEndpoint }}
         - name: LLM_MODEL
-          value: {{ .Values.llm.model }}
+          value: {{ .Values.llm.frontend.model }}
         {{ if .Values.externalSecrets }}
         # Azure OpenAI
         - name: AZURE_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-secrets
+              name: {{ .Release.Name }}-frontend-secrets
               key: llm-api-key
         - name: AZURE_API_BASE
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-secrets
+              name: {{ .Release.Name }}-frontend-secrets
               key: azure-api-base
         - name: AZURE_API_VERSION
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-secrets
+              name: {{ .Release.Name }}-frontend-secrets
               key: azure-api-version
         # OpenAI
         - name: OPENAI_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-secrets
+              name: {{ .Release.Name }}-frontend-secrets
               key: llm-api-key
         # GROQ
         - name: GROQ_API_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-secrets
+              name: {{ .Release.Name }}-frontend-secrets
               key: llm-api-key
         {{ else }}
         # Azure OpenAI
         - name: AZURE_API_KEY
-          value: {{ .Values.llm.apiKey }}
+          value: {{ .Values.llm.frontend.apiKey }}
         - name: AZURE_API_BASE
-          value: {{ .Values.llm.apiBase }}
+          value: {{ .Values.llm.frontend.apiBase }}
         - name: AZURE_API_VERSION
-          value: {{ .Values.llm.apiVersion }}
+          value: {{ .Values.llm.frontend.apiVersion }}
         # OpenAI
         - name: OPENAI_API_KEY
-          value: {{ .Values.llm.apiKey }}
+          value: {{ .Values.llm.frontend.apiKey }}
         - name: OPENAI_API_BASE
-          value: {{ .Values.llm.apiBase }}
+          value: {{ .Values.llm.frontend.apiBase }}
         # GROQ
         - name: GROQ_API_KEY
-          value: {{ .Values.llm.apiKey }}
+          value: {{ .Values.llm.frontend.apiKey }}
         - name: GROQ_API_BASE
-          value: {{ .Values.llm.apiBase }}
+          value: {{ .Values.llm.frontend.apiBase }}
         {{ end }}
         - name: LLM_TEMPERATURE
-          value: {{ .Values.llm.temperature | quote }}
+          value: {{ .Values.llm.frontend.temperature | quote }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.services.logisticsSupervisor.name }}
+  name: {{ .Values.services.exchange.name }}
   labels:
-    app: {{ .Values.services.logisticsSupervisor.name }}
-    cluster: frontend
+    app: {{ .Values.services.exchange.name }}
 spec:
   type: {{ .Values.serviceType }}
   ports:
-  - port: {{ .Values.services.logisticsSupervisor.port }}
+  - port: {{ .Values.services.exchange.port }}
     name: http
   selector:
-    app: {{ .Values.services.logisticsSupervisor.name }}
+    app: {{ .Values.services.exchange.name }}
