@@ -83,6 +83,29 @@ spec:
           value: {{ .Values.transport.nats.type }}
         - name: OTLP_HTTP_ENDPOINT
           value: {{ .Values.observability.otlpEndpoint }}
+        - name: LLM_MODEL
+          value: {{ .Values.llm.model }}
+        {{ if .Values.externalSecrets }}
+        # NVIDIA NIM
+        - name: NVIDIA_NIM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: llm-api-key
+        - name: NVIDIA_NIM_API_BASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: nvidia-api-base
+        {{ else }}
+        # NVIDIA NIM
+        - name: NVIDIA_NIM_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: NVIDIA_NIM_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        {{ end }}
+        - name: LLM_TEMPERATURE
+          value: {{ .Values.llm.temperature | quote }}
 ---
 apiVersion: v1
 kind: Service

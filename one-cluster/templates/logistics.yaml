@@ -84,6 +84,11 @@ spec:
           value: {{ $.Values.llm.apiKey }}
         - name: GROQ_API_BASE
           value: {{ $.Values.llm.apiBase }}
+        # NVIDIA NIM
+        - name: NVIDIA_NIM_API_KEY
+          value: {{ $.Values.llm.apiKey }}
+        - name: NVIDIA_NIM_API_BASE
+          value: {{ $.Values.llm.apiBase }}
         {{ end }}
         - name: LLM_TEMPERATURE
           value: {{ $.Values.llm.temperature | quote }}
