@@ -24,8 +24,9 @@ for i in {1..30}; do
   UI_IP=$(kubectl get svc -n lungo lungo-ui -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   EXCHANGE_IP=$(kubectl get svc -n lungo lungo-exchange -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   LOGISTICS_IP=$(kubectl get svc -n lungo logistic-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+  GRAFANA_IP=$(kubectl get svc -n lungo lungo-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   
-  if [[ -n "$UI_IP" && -n "$EXCHANGE_IP" && -n "$LOGISTICS_IP" ]]; then
+  if [[ -n "$UI_IP" && -n "$EXCHANGE_IP" && -n "$LOGISTICS_IP" && -n "$GRAFANA_IP" ]]; then
     break
   fi
   echo "  Waiting for LoadBalancer IPs... ($i/30)"
@@ -53,6 +54,7 @@ echo "🌐 Access Points:"
 echo "  UI Service: http://$UI_IP:3000"
 echo "  Exchange API: http://$EXCHANGE_IP:8000"
 echo "  Logistics API: http://$LOGISTICS_IP:9090"
+echo "  Grafana: http://$GRAFANA_IP:80 (admin/admin)"
 
 echo ""
 echo "✅ Lungo deployment complete!"

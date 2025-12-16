@@ -137,10 +137,11 @@ echo "⏳ Waiting for frontend LoadBalancer IPs..."
 for i in {1..30}; do
   UI_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-ui -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   LOGISTICS_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE logistic-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+  GRAFANA_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   EXCHANGE_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-exchange -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   GRAFANA_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   
-  if [[ -n "$UI_IP" && -n "$LOGISTICS_IP" && -n "$EXCHANGE_IP" && -n "$GRAFANA_IP" ]]; then
+  if [[ -n "$UI_IP" && -n "$LOGISTICS_IP" && -n "$GRAFANA_IP" && -n "$EXCHANGE_IP" && -n "$GRAFANA_IP" ]]; then
     break
   fi
   echo "  Waiting for frontend LoadBalancer IPs... ($i/30)"
@@ -170,7 +171,7 @@ echo "🌐 Access Points:"
 echo "  Lungo UI: http://$UI_IP:3000"
 echo "  Exchange API: http://$EXCHANGE_IP:8000"
 echo "  Logistics API: http://$LOGISTICS_IP:9090"
-echo "  Grafana: http://$GRAFANA_IP:3000 (admin/admin)"
+echo "  Grafana: http://$GRAFANA_IP:80 (admin/admin)"
 echo ""
 echo "🔧 Backend Services:"
 echo "  Weather MCP: Available via backend cluster"

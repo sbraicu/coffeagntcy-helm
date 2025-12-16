@@ -15,6 +15,14 @@ global:
 # Service configuration
 serviceType: LoadBalancer
 
+# Grafana configuration
+grafana:
+  service:
+    type: LoadBalancer
+    port: 80
+  adminUser: admin
+  adminPassword: admin
+
 # LLM Configuration (litellm format)
 llm:
   # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")

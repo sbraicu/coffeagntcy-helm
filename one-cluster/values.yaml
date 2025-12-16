@@ -11,6 +11,14 @@ global:
 # Service configuration - LoadBalancer for all environments
 serviceType: LoadBalancer
 
+# Grafana configuration
+grafana:
+  service:
+    type: LoadBalancer
+    port: 80
+  adminUser: admin
+  adminPassword: admin
+
 # External dependencies configuration
 external-secrets:
   installCRDs: true
