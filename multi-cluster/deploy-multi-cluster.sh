@@ -136,7 +136,7 @@ sleep 10
 echo "⏳ Waiting for frontend LoadBalancer IPs..."
 for i in {1..30}; do
   UI_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-ui -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-  LOGISTICS_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE logistics-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+  LOGISTICS_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE logistic-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   EXCHANGE_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-exchange -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   GRAFANA_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   

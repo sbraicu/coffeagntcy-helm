@@ -69,10 +69,10 @@ services:
     image: lungo-ui
     config:
       exchangeAppApiUrl: "http://lungo-exchange:8000"
-      logisticsAppApiUrl: "http://logistics-supervisor:9090"
+      logisticsAppApiUrl: "http://logistic-supervisor:9090"
 
   logisticsSupervisor:
-    name: logistics-supervisor
+    name: logistic-supervisor
     port: 9090
     image: logistic-supervisor
 

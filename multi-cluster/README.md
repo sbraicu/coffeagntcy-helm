@@ -152,7 +152,7 @@ Get service IPs and access the applications:
 ```bash
 # Get service IPs
 UI_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n lungo-frontend lungo-ui -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-LOGISTICS_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n lungo-frontend logistics-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+LOGISTICS_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n lungo-frontend logistic-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 GRAFANA_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n lungo-frontend lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 echo "Lungo UI: http://$UI_IP:3000"
@@ -314,7 +314,7 @@ kubectl --context kind-lungo-frontend get svc -n lungo-frontend | grep LoadBalan
 
 # Example output:
 # lungo-exchange      LoadBalancer   10.96.6.70      172.18.201.1   8000:31282/TCP
-# logistics-supervisor LoadBalancer  10.96.213.5     172.18.201.2   9090:31352/TCP
+# logistic-supervisor LoadBalancer  10.96.213.5     172.18.201.2   9090:31352/TCP
 ```
 
 **Note:** The deployment script automatically configures these IPs, but you can override them manually if needed.

@@ -11,7 +11,7 @@ global:
   # Cross-cluster connectivity
   frontendCluster:
     # Update these with actual frontend cluster endpoints
-    logisticsSupervisorUrl: "http://logistics-supervisor.frontend-cluster.local:9090"
+    logisticsSupervisorUrl: "http://logistic-supervisor.frontend-cluster.local:9090"
 
 # Service configuration
 serviceType: LoadBalancer
