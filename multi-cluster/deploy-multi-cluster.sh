@@ -139,9 +139,8 @@ for i in {1..30}; do
   LOGISTICS_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE logistic-supervisor -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   GRAFANA_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   EXCHANGE_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-exchange -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-  GRAFANA_IP=$(kubectl --context $FRONTEND_CONTEXT get svc -n $FRONTEND_NAMESPACE lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
   
-  if [[ -n "$UI_IP" && -n "$LOGISTICS_IP" && -n "$GRAFANA_IP" && -n "$EXCHANGE_IP" && -n "$GRAFANA_IP" ]]; then
+  if [[ -n "$UI_IP" && -n "$LOGISTICS_IP" && -n "$GRAFANA_IP" && -n "$EXCHANGE_IP" ]]; then
     break
   fi
   echo "  Waiting for frontend LoadBalancer IPs... ($i/30)"
