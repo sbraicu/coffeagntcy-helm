@@ -1,0 +1,141 @@
+# Weather MCP Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.weatherMcp.name }}
+  labels:
+    app: {{ .Values.services.weatherMcp.name }}
+    cluster: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.services.weatherMcp.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.weatherMcp.name }}
+        cluster: backend
+    spec:
+      containers:
+      - name: {{ .Values.services.weatherMcp.name }}
+        image: {{ .Values.global.image.repository }}/{{ .Values.services.weatherMcp.image }}:{{ .Values.global.image.tag }}
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.services.weatherMcp.port }}
+        env:
+        - name: TRANSPORT_SERVER_ENDPOINT
+          value: {{ .Values.transport.nats.endpoint }}
+        - name: DEFAULT_MESSAGE_TRANSPORT
+          value: {{ .Values.transport.nats.type }}
+        - name: OTLP_HTTP_ENDPOINT
+          value: {{ .Values.observability.otlpEndpoint }}
+        - name: LLM_MODEL
+          value: {{ .Values.llm.model }}
+        - name: AZURE_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: AZURE_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: AZURE_API_VERSION
+          value: {{ .Values.llm.apiVersion }}
+        - name: OPENAI_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: OPENAI_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: GROQ_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: GROQ_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: NVIDIA_NIM_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: NVIDIA_NIM_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: LLM_TEMPERATURE
+          value: {{ .Values.llm.temperature | quote }}
+          value: {{ .Values.observability.otlpEndpoint }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.weatherMcp.name }}
+  labels:
+    app: {{ .Values.services.weatherMcp.name }}
+    cluster: backend
+spec:
+  type: {{ .Values.serviceType }}
+  ports:
+  - port: {{ .Values.services.weatherMcp.port }}
+    name: http
+  selector:
+    app: {{ .Values.services.weatherMcp.name }}
+---
+# Payment MCP Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.paymentMcp.name }}
+  labels:
+    app: {{ .Values.services.paymentMcp.name }}
+    cluster: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.services.paymentMcp.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.paymentMcp.name }}
+        cluster: backend
+    spec:
+      containers:
+      - name: {{ .Values.services.paymentMcp.name }}
+        image: {{ .Values.global.image.repository }}/{{ .Values.services.paymentMcp.image }}:{{ .Values.global.image.tag }}
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.services.paymentMcp.port }}
+        env:
+        - name: TRANSPORT_SERVER_ENDPOINT
+          value: {{ .Values.transport.nats.endpoint }}
+        - name: DEFAULT_MESSAGE_TRANSPORT
+          value: {{ .Values.transport.nats.type }}
+        - name: OTLP_HTTP_ENDPOINT
+          value: {{ .Values.observability.otlpEndpoint }}
+        - name: LLM_MODEL
+          value: {{ .Values.llm.model }}
+        - name: AZURE_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: AZURE_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: AZURE_API_VERSION
+          value: {{ .Values.llm.apiVersion }}
+        - name: OPENAI_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: OPENAI_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: GROQ_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: GROQ_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: NVIDIA_NIM_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: NVIDIA_NIM_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: LLM_TEMPERATURE
+          value: {{ .Values.llm.temperature | quote }}
+          value: {{ .Values.observability.otlpEndpoint }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.paymentMcp.name }}
+  labels:
+    app: {{ .Values.services.paymentMcp.name }}
+    cluster: backend
+spec:
+  type: {{ .Values.serviceType }}
+  ports:
+  - port: {{ .Values.services.paymentMcp.port }}
+    name: http
+  selector:
+    app: {{ .Values.services.paymentMcp.name }}

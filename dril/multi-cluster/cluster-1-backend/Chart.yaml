@@ -1,0 +1,24 @@
+apiVersion: v2
+name: lungo-backend
+description: Lungo Backend Cluster - Infrastructure and Farm Services
+type: application
+version: 0.1.0
+appVersion: "1.0"
+
+dependencies:
+  # Infrastructure services
+  - name: external-secrets
+    version: "0.9.3"
+    repository: "https://charts.external-secrets.io"
+  - name: slim
+    version: "v0.6.0"
+    repository: "oci://ghcr.io/agntcy/slim/helm"
+  - name: nats
+    version: "1.3.16"
+    repository: "https://nats-io.github.io/k8s/helm/charts"
+  - name: clickhouse
+    version: "9.4.3"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+  - name: opentelemetry-collector
+    version: "0.138.0"
+    repository: "https://open-telemetry.github.io/opentelemetry-helm-charts"

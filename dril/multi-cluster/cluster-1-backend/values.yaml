@@ -1,0 +1,184 @@
+# Backend Cluster Configuration - OpenShift Compatible
+global:
+  environment: backend
+  security:
+    allowInsecureImages: true
+  image:
+    repository: ghcr.io/agntcy/coffee-agntcy
+    tag: latest
+    pullPolicy: Always
+  
+  # Cross-cluster connectivity
+  frontendCluster:
+    # Update these with actual frontend cluster endpoints
+    logisticsSupervisorUrl: "http://logistic-supervisor.frontend-cluster.local:9090"
+
+# Service configuration - LoadBalancer for OpenShift
+serviceType: LoadBalancer
+
+# External dependencies configuration
+external-secrets:
+  installCRDs: true
+
+opentelemetry-collector:
+  image:
+    repository: otel/opentelemetry-collector-k8s
+  mode: deployment
+
+# ClickHouse configuration with storage class
+clickhouse:
+  auth:
+    username: "admin"
+    password: "admin"
+  keeper:
+    enabled: false
+  shards: 1
+  replicaCount: 1
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/clickhouse
+    tag: "25.7.4-debian-12-r2"
+  persistence:
+    storageClass: "local-storage"
+    size: 8Gi
+
+# NATS configuration
+nats:
+  readinessProbe:
+    httpGet: { path: /healthz, port: 8222 }
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  livenessProbe:
+    httpGet: { path: /healthz, port: 8222 }
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  # Enable NATS box
+  natsBox:
+    enabled: true
+
+# Slim configuration
+slim:
+  image:
+    repository: ghcr.io/agntcy/slim
+    tag: v0.6.0
+
+# LLM Configuration (litellm format)
+llm:
+  # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")
+  model: "azure/gpt-4o"
+  apiKey: ""
+  apiBase: "https://your-azure-openai.openai.azure.com/"
+  apiVersion: "2024-02-15-preview"
+  temperature: 0.7
+
+# OpenShift-specific security settings
+securityContext: {}
+podSecurityContext: {}
+#   secretStoreName: "your-secret-store"       # Name of your existing SecretStore
+#   secretStoreKind: "SecretStore"             # SecretStore or ClusterSecretStore
+#   data:
+#     - secretKey: "llm-api-key"               # Key in Kubernetes secret
+#       remoteRef:
+#         key: "lungo/backend-llm-key"         # Key in external store
+#         property: "api-key"                  # Property within the key (if needed)
+
+# External dependencies
+external-secrets:
+  installCRDs: true
+
+opentelemetry-collector:
+  image:
+    repository: otel/opentelemetry-collector-k8s
+  mode: deployment
+  service:
+    type: LoadBalancer
+
+slim:
+  service:
+    type: LoadBalancer
+
+nats:
+  service:
+    type: LoadBalancer
+  readinessProbe:
+    httpGet: { path: /healthz, port: 8222 }
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  livenessProbe:
+    httpGet: { path: /healthz, port: 8222 }
+
+clickhouse:
+  service:
+    type: LoadBalancer
+  auth:
+    username: "admin"
+    password: "admin"
+  keeper:
+    enabled: false
+  shards: 1
+  replicaCount: 1
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/clickhouse
+    tag: "25.7.4-debian-12-r2"
+    pullPolicy: IfNotPresent
+  persistence:
+    storageClass: "local-storage"
+    size: 8Gi
+
+# Backend services
+services:
+  # Farm agents (NATS transport)
+  farms:
+    - name: brazil-agent
+      port: 9999
+      image: brazil-farm
+    - name: colombia-agent
+      port: 9999
+      image: colombia-farm
+    - name: vietnam-agent
+      port: 9999
+      image: vietnam-farm
+
+  # MCP servers
+  weatherMcp:
+    name: weather-mcp
+    port: 8125
+    image: weather-mcp-server
+  
+  paymentMcp:
+    name: payments-mcp
+    port: 8126
+    image: payment-mcp-server
+
+# Logistics workers (processing services in backend)
+logistics:
+  farm:
+    name: logistics-farm
+    port: 9093
+    image: logistics-farm
+  helpdesk:
+    name: logistics-helpdesk
+    port: 9094
+    image: logistics-helpdesk
+  shipper:
+    name: logistics-shipper
+    port: 9091
+    image: logistics-shipper
+  accountant:
+    name: logistics-accountant
+    port: 9092
+    image: logistics-accountant
+
+# Transport configuration
+transport:
+  nats:
+    endpoint: "nats://lungo-backend-nats:4222"
+    type: "NATS"
+  slim:
+    endpoint: "http://lungo-backend-slim:46357"
+    type: "SLIM"
+
+# Observability
+observability:
+  otlpEndpoint: "http://lungo-backend-opentelemetry-collector:4318"

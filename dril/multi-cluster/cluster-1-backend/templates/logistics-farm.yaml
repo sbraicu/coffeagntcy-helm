@@ -1,0 +1,75 @@
+{{- if .Values.logistics.farm }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.logistics.farm.name }}
+  labels:
+    app: {{ .Values.logistics.farm.name }}
+    cluster: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.logistics.farm.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.logistics.farm.name }}
+        cluster: frontend
+    spec:
+      containers:
+      - name: {{ .Values.logistics.farm.name }}
+        image: {{ .Values.global.image.repository }}/{{ .Values.logistics.farm.image }}:{{ .Values.global.image.tag }}
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.logistics.farm.port }}
+        env:
+        - name: TRANSPORT_SERVER_ENDPOINT
+          value: {{ .Values.transport.slim.endpoint }}
+        - name: DEFAULT_MESSAGE_TRANSPORT
+          value: {{ .Values.transport.slim.type }}
+        - name: OTLP_HTTP_ENDPOINT
+          value: {{ .Values.observability.otlpEndpoint }}
+        - name: LLM_MODEL
+          value: {{ .Values.llm.model }}
+        # Azure OpenAI
+        - name: AZURE_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: AZURE_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: AZURE_API_VERSION
+          value: {{ .Values.llm.apiVersion }}
+        # OpenAI
+        - name: OPENAI_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: OPENAI_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        # GROQ
+        - name: GROQ_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: GROQ_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        # NVIDIA NIM
+        - name: NVIDIA_NIM_API_KEY
+          value: {{ .Values.llm.apiKey }}
+        - name: NVIDIA_NIM_API_BASE
+          value: {{ .Values.llm.apiBase }}
+        - name: LLM_TEMPERATURE
+          value: "{{ .Values.llm.temperature }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.logistics.farm.name }}
+  labels:
+    app: {{ .Values.logistics.farm.name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.logistics.farm.port }}
+    targetPort: {{ .Values.logistics.farm.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.logistics.farm.name }}
+{{- end }}

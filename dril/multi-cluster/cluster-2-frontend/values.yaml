@@ -1,0 +1,85 @@
+# Frontend Cluster Configuration - OpenShift Compatible
+global:
+  environment: frontend
+  security:
+    allowInsecureImages: true
+  image:
+    repository: ghcr.io/agntcy/coffee-agntcy
+    tag: latest
+    pullPolicy: Always
+  
+  # Cross-cluster connectivity
+  backendCluster:
+    # Update these with actual backend cluster endpoints
+    natsEndpoint: "nats://nats.backend-cluster.local:4222"
+    slimEndpoint: "http://slim.backend-cluster.local:46357"
+    otlpEndpoint: "http://otel-collector.backend-cluster.local:4318"
+
+# Service configuration - LoadBalancer for OpenShift
+serviceType: LoadBalancer
+
+# Grafana configuration
+grafana:
+  service:
+    type: LoadBalancer
+    port: 80
+  adminUser: admin
+  adminPassword: admin
+
+# External dependencies configuration
+external-secrets:
+  installCRDs: true
+
+# LLM Configuration (litellm format)
+llm:
+  # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")
+  model: "azure/gpt-4o"
+  apiKey: ""
+  apiBase: "https://your-azure-openai.openai.azure.com/"
+  apiVersion: "2024-02-15-preview"
+  temperature: 0.7
+
+# Application services
+services:
+  exchange:
+    name: lungo-exchange
+    port: 8000
+    image: lungo-exchange
+  
+  ui:
+    name: lungo-ui
+    port: 3000
+    image: lungo-ui
+    config:
+      exchangeAppApiUrl: ""  # Will be set by deployment script
+      logisticsAppApiUrl: "" # Will be set by deployment script
+
+  # Logistics supervisor (should be in frontend cluster per architecture)
+  logisticsSupervisor:
+    name: logistics-supervisor
+    port: 9090
+    image: logistics-supervisor
+
+# Transport configuration (will be overridden by backend endpoints)
+transport:
+  nats:
+    endpoint: "nats://10.100.100.214:4222"
+    type: "NATS"
+  slim:
+    endpoint: "http://10.100.100.215:46357"
+    type: "SLIM"
+
+# Observability
+observability:
+  otlpEndpoint: "http://10.100.100.211:4318"
+
+# OpenShift-specific security settings
+securityContext: {}
+podSecurityContext: {}
+
+# Logistics supervisor only (frontend-facing coordinator)
+logistics:
+  supervisor:
+    name: logistics-supervisor
+    port: 9090
+    image: logistics-supervisor

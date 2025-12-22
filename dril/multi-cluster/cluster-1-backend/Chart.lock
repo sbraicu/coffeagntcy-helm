@@ -1,0 +1,18 @@
+dependencies:
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 0.9.3
+- name: slim
+  repository: oci://ghcr.io/agntcy/slim/helm
+  version: v0.6.0
+- name: nats
+  repository: https://nats-io.github.io/k8s/helm/charts
+  version: 1.3.16
+- name: clickhouse
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 9.4.3
+- name: opentelemetry-collector
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.138.0
+digest: sha256:b29e14fbbf74a1ed7c629964d194795294b4e2aa43a2c5de912cdf57e50d7152
+generated: "2025-12-13T02:43:20.88747387Z"
