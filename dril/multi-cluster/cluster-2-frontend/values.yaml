@@ -71,7 +71,7 @@ transport:
 
 # Observability
 observability:
-  otlpEndpoint: "http://10.100.100.211:4318"
+  otlpEndpoint: "http://10.100.100.213:4318"
 
 # OpenShift-specific security settings
 securityContext: {}

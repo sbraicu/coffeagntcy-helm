@@ -1,5 +1,0 @@
-services:
-  ui:
-    config:
-      exchangeAppApiUrl: "http://172.18.201.2:8000"
-      logisticsAppApiUrl: "http://172.18.201.4:9090"

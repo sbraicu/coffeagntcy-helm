@@ -1,0 +1,16 @@
+transport:
+  nats:
+    endpoint: "nats://10.100.100.214:4222"
+    type: "NATS"
+  slim:
+    endpoint: "http://10.100.100.215:46357"
+
+observability:
+  otlpEndpoint: "http://10.100.100.213:4318"
+
+global:
+  backendCluster:
+    natsEndpoint: "nats://10.100.100.214:4222"
+    slimEndpoint: "http://10.100.100.215:46357"
+    otlpEndpoint: "http://10.100.100.213:4318"
+    clickhouseEndpoint: "http://10.100.100.212:8123"

@@ -245,15 +245,15 @@ spec:
 EOF
         
         # Create storage directory
+        echo "  Creating storage directory on worker node..."
         KUBECONFIG=$KUBECONFIG_PATH kubectl debug node/${WORKER_NODE} -it --image=busybox -- mkdir -p /host/tmp/clickhouse-data || true
     fi
     
     # Assign SCCs to service accounts
     echo "  Assigning Security Context Constraints..."
     if [ "$CLUSTER_NAME" = "Frontend" ]; then
-        KUBECONFIG=$KUBECONFIG_PATH oc adm policy add-scc-to-group lungo-anyuid-scc system:serviceaccounts:lungo-frontend
-        KUBECONFIG=$KUBECONFIG_PATH oc adm policy add-scc-to-user grafana-scc -z lungo-frontend-grafana -n lungo-frontend
-        KUBECONFIG=$KUBECONFIG_PATH oc adm policy add-scc-to-user anyuid -z lungo-frontend-grafana -n lungo-frontend
+        # SCCs will be assigned after helm install
+        echo "  Frontend SCCs will be assigned after deployment"
     else
         KUBECONFIG=$KUBECONFIG_PATH oc adm policy add-scc-to-group lungo-anyuid-scc system:serviceaccounts:lungo-backend
     fi
@@ -275,7 +275,13 @@ helm repo add opentelemetry https://open-telemetry.github.io/opentelemetry-helm-
 helm repo update
 
 echo "⚡ Installing backend services..."
-helm dependency update .
+# Check if charts already exist to avoid rate limit issues
+if [ ! -d "charts" ] || [ -z "$(ls -A charts 2>/dev/null)" ]; then
+    echo "Downloading dependencies..."
+    helm dependency update .
+else
+    echo "Using existing charts..."
+fi
 
 # Setup security context constraints for backend
 KUBECONFIG=$BACKEND_KUBECONFIG oc adm policy add-scc-to-user anyuid -z default -n $BACKEND_NAMESPACE || KUBECONFIG=$BACKEND_KUBECONFIG kubectl create namespace $BACKEND_NAMESPACE
@@ -317,6 +323,19 @@ echo "⏳ Waiting for backend LoadBalancer IPs..."
 for i in {1..30}; do
     NATS_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-nats -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
     SLIM_LB_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-slim -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+
+    if [[ -n "$NATS_IP" && -n "$SLIM_LB_IP" ]]; then
+        break
+    fi
+    echo "  Waiting for backend LoadBalancer IPs... ($i/30)"
+    sleep 10
+done
+
+# Wait for backend LoadBalancer IPs
+echo "⏳ Waiting for backend LoadBalancer IPs..."
+for i in {1..30}; do
+    NATS_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-nats -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+    SLIM_LB_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-slim -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
     
     if [[ -n "$NATS_IP" && -n "$SLIM_LB_IP" ]]; then
         break
@@ -324,6 +343,31 @@ for i in {1..30}; do
     echo "  Waiting for backend LoadBalancer IPs... ($i/30)"
     sleep 10
 done
+
+# Wait for all backend LoadBalancer IPs to be available
+echo "⏳ Waiting for all backend LoadBalancer IPs..."
+for i in {1..60}; do
+    NATS_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-nats -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+    OTEL_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-opentelemetry-collector -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+    CLICKHOUSE_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-clickhouse -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+    SLIM_LB_IP=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE lungo-backend-slim -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+    
+    if [[ -n "$NATS_IP" && -n "$OTEL_IP" && -n "$CLICKHOUSE_IP" && -n "$SLIM_LB_IP" ]]; then
+        echo "  All backend LoadBalancer IPs ready:"
+        echo "    NATS: $NATS_IP"
+        echo "    OpenTelemetry: $OTEL_IP" 
+        echo "    ClickHouse: $CLICKHOUSE_IP"
+        echo "    SLIM: $SLIM_LB_IP"
+        break
+    fi
+    echo "  Waiting for backend LoadBalancer IPs... ($i/60)"
+    sleep 10
+done
+
+if [[ -z "$NATS_IP" || -z "$OTEL_IP" || -z "$CLICKHOUSE_IP" || -z "$SLIM_LB_IP" ]]; then
+    echo "❌ Failed to get all backend LoadBalancer IPs after 10 minutes"
+    exit 1
+fi
 
 echo "✅ Backend cluster deployed successfully"
 echo "  NATS IP: $NATS_IP"
@@ -337,28 +381,75 @@ setup_cluster_infrastructure "$FRONTEND_KUBECONFIG" "Frontend" "$FRONTEND_IP_POO
 cd ../cluster-2-frontend
 
 echo "📦 Adding Helm repositories for frontend..."
-helm repo update
+helm repo add external-secrets https://charts.external-secrets.io 2>/dev/null || true
+helm repo add grafana https://grafana.github.io/helm-charts 2>/dev/null || true
+timeout 120 helm repo update
 
 echo "⚡ Installing frontend services..."
-helm dependency update .
+# Check if charts already exist to avoid rate limit issues
+if [ ! -d "charts" ] || [ -z "$(ls -A charts 2>/dev/null)" ]; then
+    echo "Downloading dependencies..."
+    timeout 300 helm dependency update .
+else
+    echo "Using existing charts..."
+fi
 
 # Setup security context constraints for frontend
 KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-user anyuid -z default -n $FRONTEND_NAMESPACE || KUBECONFIG=$FRONTEND_KUBECONFIG kubectl create namespace $FRONTEND_NAMESPACE
 KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-user anyuid -z default -n $FRONTEND_NAMESPACE
 
-# Create frontend configuration with backend endpoints
-cat > /tmp/frontend-backend-config.yaml <<EOF
-services:
-  backend:
+echo "⚡ Installing frontend application..."
+# Create backend endpoints configuration file in chart directory
+cat > backend-endpoints.yaml <<EOF
+transport:
+  nats:
+    endpoint: "nats://$NATS_IP:4222"
+    type: "NATS"
+  slim:
+    endpoint: "http://$SLIM_LB_IP:46357"
+
+observability:
+  otlpEndpoint: "http://$OTEL_IP:4318"
+
+global:
+  backendCluster:
     natsEndpoint: "nats://$NATS_IP:4222"
     slimEndpoint: "http://$SLIM_LB_IP:46357"
+    otlpEndpoint: "http://$OTEL_IP:4318"
     clickhouseEndpoint: "http://$CLICKHOUSE_IP:8123"
-    otelEndpoint: "http://$OTEL_IP:4318"
+EOF
+
+# Create frontend LoadBalancer configuration file in chart directory
+cat > frontend-lb-config.yaml <<EOF
+serviceType: LoadBalancer
+grafana:
+  service:
+    type: LoadBalancer
+    port: 80
 EOF
 
 KUBECONFIG=$FRONTEND_KUBECONFIG helm install lungo-frontend . \
   --create-namespace --namespace $FRONTEND_NAMESPACE \
-  --values /tmp/frontend-backend-config.yaml
+  --values backend-endpoints.yaml \
+  --values frontend-lb-config.yaml
+
+if [ $? -ne 0 ]; then
+    echo "❌ Frontend helm install failed"
+    exit 1
+fi
+
+echo "✅ Frontend application installed successfully"
+
+# Add Grafana Security Context Constraints
+echo "🔒 Adding Grafana Security Context Constraints..."
+KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-group lungo-anyuid-scc system:serviceaccounts:lungo-frontend
+KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-user grafana-scc -z lungo-frontend-grafana -n $FRONTEND_NAMESPACE
+KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-user anyuid -z lungo-frontend-grafana -n $FRONTEND_NAMESPACE
+
+# Add Grafana Security Context Constraints
+echo "🔒 Adding Grafana Security Context Constraints..."
+KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-user grafana-scc -z lungo-frontend-grafana -n $FRONTEND_NAMESPACE
+KUBECONFIG=$FRONTEND_KUBECONFIG oc adm policy add-scc-to-user anyuid -z lungo-frontend-grafana -n $FRONTEND_NAMESPACE
 
 # Fix security contexts for frontend services
 echo "🔒 Fixing security contexts for frontend services..."
@@ -394,11 +485,28 @@ echo "✅ Frontend cluster deployed successfully"
 echo ""
 echo "🔍 Step 3: Verifying multi-cluster deployment..."
 
-BACKEND_PODS=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get pods -n $BACKEND_NAMESPACE --field-selector=status.phase=Running --no-headers | wc -l)
-FRONTEND_PODS=$(KUBECONFIG=$FRONTEND_KUBECONFIG kubectl get pods -n $FRONTEND_NAMESPACE --field-selector=status.phase=Running --no-headers | wc -l)
+BACKEND_PODS=$(KUBECONFIG=$BACKEND_KUBECONFIG kubectl get pods -n $BACKEND_NAMESPACE --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
+FRONTEND_PODS=$(KUBECONFIG=$FRONTEND_KUBECONFIG kubectl get pods -n $FRONTEND_NAMESPACE --field-selector=status.phase=Running --no-headers 2>/dev/null | wc -l)
 
 echo "  Backend pods running: $BACKEND_PODS"
 echo "  Frontend pods running: $FRONTEND_PODS"
+
+# Test cross-cluster connectivity
+echo "🔗 Testing cross-cluster connectivity..."
+if [[ -n "$NATS_IP" ]]; then
+    KUBECONFIG=$FRONTEND_KUBECONFIG kubectl run connectivity-test --rm -i --image=busybox --restart=Never -n $FRONTEND_NAMESPACE -- nc -zv $NATS_IP 4222 2>/dev/null && echo "  ✅ Cross-cluster connectivity working" || echo "  ⚠️  Cross-cluster connectivity test failed"
+else
+    echo "  ⚠️  NATS IP not available for connectivity test"
+fi
+
+echo ""
+echo "🎉 Multi-cluster deployment completed!"
+echo ""
+echo "📋 Access URLs:"
+echo "  UI: http://$UI_IP:3000"
+echo "  Exchange: http://$EXCHANGE_IP:8000"
+GRAFANA_IP=$(KUBECONFIG=$FRONTEND_KUBECONFIG kubectl get svc -n $FRONTEND_NAMESPACE lungo-frontend-grafana -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+echo "  Grafana: http://$GRAFANA_IP:80"
 
 echo ""
 echo "🎉 Multi-Cluster Deployment Complete!"

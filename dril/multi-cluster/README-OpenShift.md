@@ -64,3 +64,18 @@ KUBECONFIG=$FRONTEND_KUBECONFIG kubectl get pods -n $FRONTEND_NAMESPACE
 # Check backend cluster  
 KUBECONFIG=$BACKEND_KUBECONFIG kubectl get pods -n $BACKEND_NAMESPACE
 ```
+
+## Troubleshooting
+
+### ClickHouse Pod Stuck in ContainerCreating
+The script automatically creates the required storage directory. If issues persist:
+```bash
+# Manually create storage directory on worker node
+KUBECONFIG=$BACKEND_KUBECONFIG kubectl debug node/<worker-node> -it --image=busybox -- mkdir -p /host/tmp/clickhouse-data
+```
+
+### Cross-Cluster Connectivity Issues
+Verify LoadBalancer IPs are assigned:
+```bash
+KUBECONFIG=$BACKEND_KUBECONFIG kubectl get svc -n $BACKEND_NAMESPACE | grep LoadBalancer
+```

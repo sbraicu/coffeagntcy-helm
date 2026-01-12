@@ -49,10 +49,7 @@ cleanup_cluster() {
         
         # Clean up storage directory
         echo "  Cleaning up storage directory..."
-        WORKER_NODE=$(KUBECONFIG=$KUBECONFIG_PATH kubectl get nodes --selector='!node-role.kubernetes.io/master' -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-        if [ -n "$WORKER_NODE" ]; then
-            KUBECONFIG=$KUBECONFIG_PATH kubectl debug node/${WORKER_NODE} -it --image=busybox -- rm -rf /host/tmp/clickhouse-data 2>/dev/null || echo "  Storage directory cleanup skipped"
-        fi
+        # Storage directory cleanup not needed
     fi
     
     echo "✅ $CLUSTER_NAME cluster cleanup completed"
@@ -66,7 +63,12 @@ cleanup_cluster "$FRONTEND_KUBECONFIG" "$FRONTEND_NAMESPACE" "lungo-frontend" "F
 
 # Remove temporary files
 echo "📄 Removing temporary files..."
+rm -f /tmp/backend-endpoints.yaml 2>/dev/null || true
+rm -f /tmp/frontend-lb-config.yaml 2>/dev/null || true
 rm -f /tmp/frontend-backend-config.yaml 2>/dev/null || true
+# Remove config files from frontend chart directory
+rm -f cluster-2-frontend/backend-endpoints.yaml 2>/dev/null || true
+rm -f cluster-2-frontend/frontend-lb-config.yaml 2>/dev/null || true
 
 echo ""
 echo "✅ Multi-cluster cleanup completed!"

@@ -131,7 +131,6 @@ llm:
     temperature: 0.7
 
   backend:
-    # Model with provider prefix (e.g., "openai/gpt-4", "azure/deployment-name", "groq/llama-3.1-70b-versatile")
     model: "azure/gpt-4o"
     apiKey: ""
     apiBase: "https://your-azure-openai.openai.azure.com/"
